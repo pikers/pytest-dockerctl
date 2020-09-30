@@ -11,6 +11,9 @@ For now install from this repo:
 ::
     pip install git+git://github.com/tgoodlet/pytest-dockerctl.git
 
+Caveats
+*******
+Your ``Dockerfile`` must have a `HEALTHCHECK`_ directive.
 
 Usage
 *****
@@ -53,3 +56,4 @@ the underlying client via ``dockerctl.client``.
 .. _pytest: https://docs.pytest.org
 .. _docker-py: https://github.com/docker/docker-py
 .. _DockerClient: https://docker-py.readthedocs.io/en/stable/client.html#client-reference
+.. _HEALTHCHECK: https://docs.docker.com/engine/reference/builder/#healthcheck
