@@ -13,6 +13,16 @@ class DockerClientError(Exception):
     """Generic docker API error.
     """
 
+def has_attr(cntr, attr_path) -> bool:
+    attrs = cntr.attrs
+    for key in attr_path:
+        if key not in attrs:
+            return False
+
+        attrs = attrs[key]
+
+    return True
+
 
 def waitfor(cntr, attr_path, expect=None, timeout=20):
     """Wait for a container's attr value to be set.
@@ -32,8 +42,8 @@ def waitfor(cntr, attr_path, expect=None, timeout=20):
         elif val == expect:
             return val
     else:
-        raise TimeoutError("{} failed to be {}".format(
-            attr_path, expect if expect else 'not None'))
+        raise TimeoutError("{} failed to be {}, value: \"{}\"".format(
+            attr_path, expect if expect else 'not None', val))
 
 
 class DockerCtl(object):
@@ -62,7 +72,8 @@ class DockerCtl(object):
             log.info("{}:{} Waiting on networking and health check...".format(
                 image, container.short_id))
             waitfor(container, ('NetworkSettings', 'IPAddress'))
-            waitfor(container, ('State', 'Health', 'Status'), expect='healthy')
+            if has_attr(container, ('State', 'Health', 'Status')):
+                waitfor(container, ('State', 'Health', 'Status'), expect='healthy')
         try:
             yield containers
         finally:
