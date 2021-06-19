@@ -11,10 +11,6 @@ For now install from this repo:
 ::
     pip install git+git://github.com/tgoodlet/pytest-dockerctl.git
 
-Caveats
-*******
-Your ``Dockerfile`` must have a `HEALTHCHECK`_ directive.
-
 Usage
 *****
 Provides a ``dockerctl`` fixture for spinning up and tearing down containers:

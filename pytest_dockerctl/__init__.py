@@ -5,6 +5,10 @@ import logging
 import pytest
 import requests
 
+from typing import Tuple
+
+from docker.models.containers import Container
+
 
 log = logging.getLogger('pytest-dockerctl')
 
@@ -13,7 +17,10 @@ class DockerClientError(Exception):
     """Generic docker API error.
     """
 
-def has_attr(cntr, attr_path) -> bool:
+def has_attr(
+    cntr: Container,
+    attr_path: Tuple[str]
+) -> bool:
     attrs = cntr.attrs
     for key in attr_path:
         if key not in attrs:
@@ -24,7 +31,12 @@ def has_attr(cntr, attr_path) -> bool:
     return True
 
 
-def waitfor(cntr, attr_path, expect=None, timeout=20):
+def waitfor(
+    cntr: Container,
+    attr_path: Tuple[str],
+    expect=None,
+    timeout=20
+):
     """Wait for a container's attr value to be set.
     If ``expect`` is provided wait for the value to be set to that value.
     """
