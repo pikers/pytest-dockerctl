@@ -83,7 +83,12 @@ class DockerCtl(object):
         for container in containers:
             log.info("{}:{} Waiting on networking and health check...".format(
                 image, container.short_id))
-            waitfor(container, ('NetworkSettings', 'IPAddress'))
+            if 'network' in kwargs and kwargs['network'] == 'host':
+                waitfor(container, ('NetworkSettings', 'Networks', 'host'))
+
+            else:
+                waitfor(container, ('NetworkSettings', 'IPAddress'))
+
             if has_attr(container, ('State', 'Health', 'Status')):
                 waitfor(container, ('State', 'Health', 'Status'), expect='healthy')
         try:
