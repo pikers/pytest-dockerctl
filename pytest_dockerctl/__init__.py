@@ -67,22 +67,39 @@ class DockerCtl(object):
             base_url=url, **kwargs) if url else docker.from_env(**kwargs)
 
     @contextlib.contextmanager
-    def run(self, image, command=None, num=1, **kwargs):
+    def run(self, image, command=None, num=1, commands=[], **kwargs):
         """Launch ``num`` docker containers in the background, pulling the image
         first if necessary. Returns a context manager that stops and removes
         all containers on teardown.
         """
         api = self.client.containers
         containers = []
-        for _ in range(num):
-            container = api.run(image, command=command, detach=True, **kwargs)
+
+        name = None
+        if 'name' in kwargs:
+            name = kwargs['name']
+
+        if len(commands) > 0:
+            assert num == len(commands)
+
+        for i in range(num):
+            if name and num > 1:
+                kwargs['name'] = f'{name}-{i}'
+
+            if len(commands) > 0:
+                cmd = commands[i]
+
+            else:
+                cmd = command
+
+            container = api.run(image, command=cmd, detach=True, **kwargs)
             log.info("{}:{} Started container"
-                     .format(image, container.short_id))
+                     .format(image, container.name if name else container.short_id))
             containers.append(container)
 
         for container in containers:
             log.info("{}:{} Waiting on networking and health check...".format(
-                image, container.short_id))
+                image, container.name if name else container.short_id))
             if 'network' in kwargs and kwargs['network'] == 'host':
                 waitfor(container, ('NetworkSettings', 'Networks', 'host'))
 
@@ -95,12 +112,15 @@ class DockerCtl(object):
             yield containers
         finally:
             for container in containers:
-                container.stop()
-                log.info("{}:{} Stopped container"
-                         .format(image, container.short_id))
+                container.reload()
+                if container.status == 'running':
+                    container.stop()
+                    log.info("{}:{} Stopped container"
+                             .format(image, container.name if name else container.short_id))
+
                 container.remove()
                 log.info("{}:{} Removed container"
-                         .format(image, container.short_id))
+                         .format(image, container.name if name else container.short_id))
 
 
 @pytest.hookimpl
