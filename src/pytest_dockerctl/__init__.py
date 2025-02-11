@@ -287,7 +287,7 @@ class DockerCtl(object):
             base_url=url, **kwargs) if url else docker.from_env(**kwargs)
 
     @contextlib.contextmanager
-    def run(self, image, command=None, num=1, auto_remove: bool = True, **kwargs):
+    def run(self, image, command=None, num=1, auto_remove: bool = True, timeout=20, **kwargs):
         """Launch ``num`` docker containers in the background, pulling the image
         first if necessary. Returns a context manager that stops and removes
         all containers on teardown.
@@ -305,13 +305,13 @@ class DockerCtl(object):
             log.info("{}:{} Waiting on networking and health check...".format(
                 image, container.cntr.short_id))
             if 'network' in kwargs and kwargs['network'] == 'host':
-                container.waitfor(('NetworkSettings', 'Networks', 'host'))
+                container.waitfor(('NetworkSettings', 'Networks', 'host'), timeout=timeout)
 
             else:
-                container.waitfor(('NetworkSettings', 'IPAddress'))
+                container.waitfor(('NetworkSettings', 'IPAddress'), timeout=timeout)
 
             if container.has_attr(('State', 'Health', 'Status')):
-                container.waitfor(('State', 'Health', 'Status'), expect='healthy')
+                container.waitfor(('State', 'Health', 'Status'), expect='healthy', timeout=timeout)
         try:
             if len(containers) > 1:
                 yield containers
